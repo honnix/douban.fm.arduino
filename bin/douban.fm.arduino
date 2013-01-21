@@ -1,0 +1,90 @@
+#!/usr/bin/env ruby
+
+require 'douban.fm.arduino'
+require 'optparse'
+require 'ostruct'
+require 'serialport'
+require 'net/http'
+
+class DoubanFMArduinoCLI
+  def parse
+    options = OpenStruct.new
+    options.verbose = false
+
+    opts = OptionParser.new do |opts|
+      opts.banner = "Usage: #{File.basename($PROGRAM_NAME)} [OPTIONS]"
+
+      opts.on('-d', '--device device',
+              'the serial device where to read arduino serial output',
+              'usually it is /dev/tty.usbserial-*') do |device|
+        options.device = device
+      end
+
+      opts.on('-r', '--remote remote',
+              'remote host where douban.fm is running, in format of <IP>:<Port>',
+              'by deafult it is localhost:3000') do |remote|
+        unless remote.split(':').length == 2
+          puts opts
+          exit
+        end
+
+        options.remote = remote
+      end
+
+      opts.on('-v', '--version', 'show current version') do
+        puts DoubanFM::VERSION
+        exit
+      end
+
+      opts.on_tail('-h', '--help', 'show this message') do
+        puts opts
+        exit
+      end
+    end
+
+    opts.parse!
+
+    options
+  end
+
+  def main
+    options = parse
+
+    if options.device.nil?
+      puts 'device must be specified'
+      exit
+    end
+
+    if options.remote.nil?
+      options.remote = 'localhost:3000'
+    end
+
+    port_str = "#{options.device}"
+    baud_rate = 9600
+    data_bits = 8 
+    stop_bits = 1 
+    parity = SerialPort::NONE
+ 
+
+    sp = SerialPort.new(port_str, baud_rate, data_bits, stop_bits, parity)
+
+    %w[INT TERM].each do |signal|
+      trap(signal) do
+        sp.close
+        puts 'stopped'
+        exit
+      end 
+    end 
+ 
+    puts 'started'
+
+    while true do
+      while (channel_id = sp.gets) do
+        uri = URI("http://#{options.remote}/channel/#{channel_id}")
+        Net::HTTP.get(uri)
+      end 
+    end
+  end
+end
+
+DoubanFMArduinoCLI.new.main
