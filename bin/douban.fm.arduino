@@ -79,7 +79,7 @@ class DoubanFMArduinoCLI
     puts 'started'
 
     while true do
-      while (channel_id = sp.gets) do
+      while (channel_id = sp.gets.chomp) do
         uri = URI("http://#{options.remote}/channel/#{channel_id}")
         Net::HTTP.get(uri)
       end 

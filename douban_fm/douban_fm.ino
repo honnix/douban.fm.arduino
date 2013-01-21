@@ -26,7 +26,8 @@ void turnOnLed(int which) {
   for (int i = 0; i < LENGTH; ++i) {
     if (i == which) {
       digitalWrite(ledPins[i], HIGH);
-      Serial.print(channelIds[i]);
+      Serial.println(channelIds[i]);
+      Serial.flush();
     } else {
       digitalWrite(ledPins[i], LOW);
     }
