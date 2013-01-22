@@ -59,7 +59,7 @@ class DoubanFMArduinoCLI
       options.remote = 'localhost:3000'
     end
 
-    port_str = "#{options.device}"
+    port_str = options.device
     baud_rate = 9600
     data_bits = 8 
     stop_bits = 1 
